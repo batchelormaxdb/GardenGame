@@ -3,94 +3,69 @@ using System;
 
 public partial class CameraController : Node3D
 {
-    [Export] public float RotationSpeed = 0.01f; // Rotation speed factor
-    public int test;
-    [Export] public float ZoomSpeed = 2f; // Speed for zooming in/out
-    [Export] public float MinZoomDistance = 2f; // Minimum zoom distance
-    [Export] public float MaxZoomDistance = 20f; // Maximum zoom distance
+    [Export] 
+    public float RotationSpeed = 0.01f;
+    [Export] 
+    public float ZoomSpeed = 2f;
+    [Export] 
+    public float MinZoomDistance = 2f;
+    [Export] 
+    public float MaxZoomDistance = 20f;
+    [Export]
     private Camera3D Camera;
     private bool IsRotating = false;
-    private Vector2 LastMousePos;
     private float Speed = 20f;
     public override void  _Ready()
     {
-        Camera = new Camera3D();
-        Camera.Position = new Vector3(0, 2.3f, 2.3f);
-        Camera.Rotation = new Vector3(-45,0,0);
+        Camera = this.FindChild("Camera3D") as Camera3D;
     }
     public override void _Process(double delta)
     {
-        Vector3 velocity = Vector3.Zero;
-        InputEventMouseMotion mouseMovement = new InputEventMouseMotion();
+        Vector2 inputVector = Input.GetVector("MoveLeft", "MoveRight", "MoveForward", "MoveBackward");
 
-        if (Input.IsActionPressed("MoveLeft"))
-        {
-            velocity.X -= 0.5f;
-        }
-        if (Input.IsActionPressed("MoveRight"))
-        {
-            velocity.X += 0.5f;
-        }
-        if (Input.IsActionPressed("MoveForward"))
-        {
-            velocity.Z -= 0.5f;
-        }
-        if (Input.IsActionPressed("MoveBackward"))
-        {
-            velocity.Z += 0.5f;
-        }
-        Position += velocity * (float)delta * Speed;
+        Vector3 translatedInput = new Vector3(inputVector.X, 0, inputVector.Y);
+
+        translatedInput = translatedInput.Rotated(Vector3.Up, Rotation.Y);
+
+        Position += translatedInput * (float)delta * Speed;
+
+        //Force camera to always look at this cameraArm node
+        Camera.LookAt(this.GlobalPosition);
     }
-        public override void _Input(InputEvent @event)
+    public override void _Input(InputEvent @event)
     {
-        // Handle mouse button input for rotation
         if (@event is InputEventMouseButton mouseButtonEvent)
         {
-            // Check if the left mouse button is pressed or released
-            if (mouseButtonEvent.ButtonIndex == MouseButton.Left)
-            {
-                if (mouseButtonEvent.Pressed)
-                {
-                    IsRotating = true;
-                    LastMousePos = mouseButtonEvent.Position;
-                }
-                else
-                {
-                    IsRotating = false;
-                }
-            }
+            //Only trigger rotation enable bool when left mouse button is being held
+            IsRotating = mouseButtonEvent.ButtonIndex == MouseButton.Left && mouseButtonEvent.Pressed;
+
             // Handle scroll wheel zooming
             if (mouseButtonEvent.ButtonIndex == MouseButton.WheelUp)
-            {
                 ZoomCamera(-ZoomSpeed);
-            }
             else if (mouseButtonEvent.ButtonIndex == MouseButton.WheelDown)
-            {
                 ZoomCamera(ZoomSpeed);
-            }
         }
 
         // Handle mouse motion for camera rotation
         if (@event is InputEventMouseMotion mouseMotionEvent && IsRotating)
         {
             Vector2 mouseDelta = mouseMotionEvent.Relative;
-            RotateY(-mouseDelta.X * RotationSpeed); // Rotate around the Y axis (yaw)
+            RotateY(-mouseDelta.X * RotationSpeed);
         }
     }
 
     private void ZoomCamera(float zoomAmount)
     {
-        // Get the forward direction (relative to the camera's current orientation)
-        Vector3 forward = GlobalTransform.Basis.Z; // Z points forward
+        Console.WriteLine("Zooming");
 
-        // Move the camera along the forward direction
-        Vector3 newPosition = Position + forward * zoomAmount;
+        Vector3 NewPosition = Camera.GlobalPosition.MoveToward(GlobalPosition, zoomAmount);
 
-        // Limit zoom distance
-        float distanceToOrigin = newPosition.Length();
-        if (distanceToOrigin >= MinZoomDistance && distanceToOrigin <= MaxZoomDistance)
+        float CameraDistance = NewPosition.DistanceTo(GlobalPosition);
+
+        if (CameraDistance >= MinZoomDistance && CameraDistance <= MaxZoomDistance)
         {
-            Position = newPosition;
+            Camera.GlobalPosition = NewPosition;
         }
+        
     }
 }
