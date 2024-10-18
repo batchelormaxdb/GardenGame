@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://dpfty3ot326iy"]
+
+[ext_resource type="Script" path="res://Scripts/CameraController.cs" id="1_y533f"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8clq7"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_0u7tn"]
+width = 152
+height = 167
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 2.29, 2.374)
+fov = 100.0
+near = 0.059
+script = ExtResource("1_y533f")
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
+shape = SubResource("CapsuleShape3D_8clq7")
+
+[node name="Sprite3D" type="Sprite3D" parent="CharacterBody3D"]
+modulate = Color(0.830529, 0.150263, 0.247414, 1)
+texture = SubResource("NoiseTexture2D_0u7tn")
